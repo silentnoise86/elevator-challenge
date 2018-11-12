@@ -1,0 +1,24 @@
+.building-container {
+  width: 100%;
+  height: 100%;
+  
+  display: flex;
+  flex-direction: row;
+}
+.floor-container {
+
+  display: flex;
+  flex-direction: column-reverse;
+  bottom: 0;
+}
+
+.elevators-container {
+  margin-left: 2rem;
+
+  bottom: 0;
+  display: flex;
+  flex-direction: row;
+}
+app-elevator {
+  height: 100%;
+}
