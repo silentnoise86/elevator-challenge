@@ -1,0 +1,14 @@
+.elevator{
+   background-image: url("../../../../elv.png");
+  height: 107px;
+  width: 107px;
+  margin: 0 10px;
+  background-size: cover;
+
+}
+.elevator-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  margin-right: 1rem;
+}
