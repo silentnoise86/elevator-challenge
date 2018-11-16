@@ -1,3 +1,5 @@
+import {animate, animation, state, style, transition, trigger} from '@angular/animations';
+
 export class ElevatorStatus {
   constructor(elevatorNumber: number) {
     this.elevatorNumber = elevatorNumber;
@@ -9,9 +11,21 @@ export class ElevatorStatus {
 }
 
 export interface ElevatorCommand {
-  elevatorToMove: number;
-  floorToMove: number;
+  elevatorToMove?: number;
+  floorToMove?: number;
+  isAvailable?: number;
 }
+export interface FloorCommand {
+   floorToMove?: number;
+   floorHeight?: string;
+   floorReached?: number;
+}
+
+export interface  ElevatorAvailableUpdate {
+  isAvailable: number;
+}
+
+
 export class ElevatorsStatus {
   constructor(status: ElevatorStatus[]) {
     this.status = status;
@@ -39,3 +53,10 @@ export class OrdersQueue {
     return this.orders.pop();
   }
 }
+
+export const elevatorAnimation =  trigger('elevatorMove', [
+    state('moving', style({transform: 'translateY(0)' })),
+    transition('moving=> *',
+      animate('2s 100ms ease-out'))
+  ]);
+

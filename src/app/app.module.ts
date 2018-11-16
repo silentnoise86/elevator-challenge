@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import {ElevatorService} from './elevatorService';
 import { ElevatorComponent } from './elevator/elevator.component';
 import { FloorComponent } from './floor/floor.component';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -13,7 +14,8 @@ import { FloorComponent } from './floor/floor.component';
     FloorComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    BrowserAnimationsModule
   ],
   providers: [ElevatorService],
   bootstrap: [AppComponent]

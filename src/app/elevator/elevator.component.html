@@ -1,5 +1,10 @@
-<div class="elevator-container" >
-  <div class="elevator" id="elev_` + i + `">
-    <div class="timer" >HELLO</div>
+<div #elevatorElm class="elevator-container" >
+  <div [@elevatorMove]="{value :shouldMove ? 'moving': 'static', params:{distanceToMove:distanceToMove}}"
+       (@elevatorMove.done)="onFloorReached($event)"
+       (@elevatorMove.start)="logEvent($event)"
+       class="elevator" id="elev_` + i + `">
+    <div class="timer" >{{currentFloor}}</div>
   </div>
+
 </div>
+<button (click)="moveElevator(2)">{{shouldMove}}</button>
