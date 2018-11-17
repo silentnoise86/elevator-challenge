@@ -20,7 +20,7 @@ export class FloorComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.floorCommand.subscribe(signal => {
+     this.floorCommand.subscribe(signal => {
       if (signal.floorReached && signal.floorReached === this.floorNumber) {
         this.floorOrdered = false;
       }

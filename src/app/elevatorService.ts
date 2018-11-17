@@ -41,7 +41,6 @@ export class ElevatorService {
     if (this.isActiveElevator() && this.hasOrders()) {
 
       const requestedFloor = this.orderQueue.getOrder();
-      console.log(this.orderQueue);
       const elevatorToMove = this.getClosestElevator(requestedFloor);
       this.moveElevator(requestedFloor, elevatorToMove);
     }
