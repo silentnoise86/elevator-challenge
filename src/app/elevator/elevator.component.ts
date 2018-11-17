@@ -1,4 +1,15 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone, OnInit, ViewChild} from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import {Subject} from 'rxjs';
 import {ElevatorService} from '../elevatorService';
 import {ElevatorCommand, ElevatorStatus} from '../ElevatorModels';
@@ -18,7 +29,7 @@ import {animate, state, style, transition, trigger, AnimationEvent} from '@angul
 })
 
 
-export class ElevatorComponent implements OnInit, AfterViewInit {
+export class ElevatorComponent implements OnInit, AfterViewInit, OnChanges {
   @Input() elevatorNumber: number;
   @ViewChild('elevatorElm') elevatorElm: ElementRef;
   elevatorControl: Subject<ElevatorCommand>;
@@ -28,6 +39,7 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
   distanceToMove = 'translateY(0)';
   shouldMove = false;
   time = '4s';
+  moveDuration = 0;
 
   constructor(
     private elevatorService: ElevatorService,
@@ -46,6 +58,9 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
     });
   }
 
+  ngOnChanges(event: SimpleChanges) {
+    console.log(event);
+  }
   ngAfterViewInit() {
 
   }
@@ -58,8 +73,7 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
           const direction = this.currentFloor - this.floorOrdered < 0 ? 1 : -1;
           this.distanceToMove = `translateY(${this.floorheight * (1 - this.floorOrdered)}px)`;
           this.time = `${Math.abs(this.currentFloor - this.floorOrdered) * 0.5}s`;
-          console.log(`time`, this.time);
-          console.log('distance to move', this.distanceToMove);
+          this.startTimer();
           this.shouldMove = true;
         }
       }, this, [floorToMove]
@@ -70,14 +84,14 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
 
   onFloorReached(event: AnimationEvent) {
     this.ngZone.run(() => {
-        if (event.fromState === 'static') {
-          this.shouldMove = false;
-          this.getElevatorStatus().currentFloor = this.floorOrdered;
-          this.currentFloor = this.floorOrdered;
-          setTimeout(() => {
-            this.elevatorControl.next({isAvailable: this.elevatorNumber, floorToMove: this.currentFloor});
-          }, 2000);
-        }
+      if (event.fromState === 'static') {
+        this.shouldMove = false;
+        this.getElevatorStatus().currentFloor = this.floorOrdered;
+        this.currentFloor = this.floorOrdered;
+        setTimeout(() => {
+          this.elevatorControl.next({isAvailable: this.elevatorNumber, floorToMove: this.currentFloor});
+        }, 2000);
+      }
     }, this, [event]);
 
 
@@ -91,4 +105,15 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
     return this.elevatorService.elevatorsStatus.status[this.elevatorNumber - 1];
   }
 
+  private startTimer() {
+    this.moveDuration = Math.abs(this.currentFloor - this.floorOrdered);
+
+    const interval = setInterval(() => {
+      if (this.moveDuration) {
+        this.moveDuration--;
+      } else {
+        clearInterval(interval);
+      }
+    }, 500);
+  }
 }

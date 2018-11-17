@@ -2,7 +2,7 @@
   <div [@elevatorMove]="{value :shouldMove ? 'moving': 'static', params:{distanceToMove:distanceToMove , time :time}}"
        (@elevatorMove.done)="onFloorReached($event)"
        class="elevator" id="elev_` + i + `">
-    <div class="timer" >{{currentFloor}}</div>
+    <div class="timer" >{{moveDuration}}</div>
   </div>
 
 </div>
