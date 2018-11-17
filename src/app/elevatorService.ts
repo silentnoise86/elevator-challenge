@@ -20,7 +20,7 @@ export class ElevatorService {
   orderQueue = new OrdersQueue();
   elevatorControl = new Subject<ElevatorCommand>();
   floorControl = new Subject<FloorCommand>();
-  elevatorsStatus: ElevatorStatus[] = getElevatorsStatus(3) ;
+  elevatorsStatus: ElevatorStatus[] = getElevatorsStatus(5) ;
 
 
   constructor() {
@@ -58,11 +58,6 @@ export class ElevatorService {
     }
   }
 
-  private isActiveElevator(): boolean {
-    return !!this.elevatorsStatus.find(
-      status => status.available);
-  }
-
   private getClosestElevator(floor: number): number {
     console.log(this.elevatorsStatus.map(status => {
       return {...status, timeFromFloor: this.calcTotalTimeFromFloor(floor, status)};
@@ -76,7 +71,7 @@ export class ElevatorService {
     console.log('sending ', elevatorToMove, 'to', requestedFloor);
     this.elevatorControl.next({floorToMove: requestedFloor, elevatorToMove: elevatorToMove});
     this.elevatorsStatus[elevatorToMove - 1].available = false;
-    this.elevatorsStatus[elevatorToMove - 1].currentFloor = -1;
+
   }
 
   private hasOrders() {
@@ -88,7 +83,7 @@ export class ElevatorService {
   }
 
   private calcTotalTimeFromFloor(floor: number, status: ElevatorStatus) {
-    const allOrders = [floor, ...status.orders.orders];
+    const allOrders = [floor, ...status.orders.orders, status.currentFloor];
     const timetillCurrentNextFloor = status.secondsToNextFloor;
     return allOrders.map((elevatorStatus, index, array) => (array[index + 1] ?
       Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) + timetillCurrentNextFloor;

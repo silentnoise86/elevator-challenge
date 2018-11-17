@@ -87,6 +87,7 @@ export class ElevatorComponent implements OnInit {
         this.shouldMove = false;
         this.getElevatorStatus().currentFloor = this.floorOrdered;
         this.currentFloor = this.floorOrdered;
+        this.getElevatorStatus().secondsToNextFloor = 0;
         setTimeout(() => {
           this.occupied = false;
           let isAvailable = false;

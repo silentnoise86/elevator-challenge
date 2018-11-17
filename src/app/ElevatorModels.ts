@@ -21,7 +21,7 @@ export class OrdersQueue {
 export class ElevatorStatus {
   elevatorNumber: number;
   available = true;
-  currentFloor = 0;
+  currentFloor = 1;
   secondsToNextFloor = 0;
   orders: OrdersQueue;
   constructor(elevatorNumber: number) {
