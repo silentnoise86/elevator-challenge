@@ -39,6 +39,6 @@ export class FloorComponent implements OnInit {
   }
 
   private elevatorOnFloor() {
-    return this.elevatorService.elevatorsStatus.status.find(elevator => elevator.currentFloor === this.floorNumber);
+    return this.elevatorService.elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber);
   }
 }

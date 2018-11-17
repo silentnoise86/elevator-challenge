@@ -1,5 +1,13 @@
-import {Injectable, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {ElevatorCommand, elevatorsStatus, FloorCommand, OrdersQueue} from './ElevatorModels';
+import {Injectable} from '@angular/core';
+import {
+  ElevatorCommand,
+  ElevatorsStatus,
+  elevatorsStatus,
+  ElevatorStatus,
+  FloorCommand,
+  getElevatorsStatus,
+  OrdersQueue
+} from './ElevatorModels';
 import {Subject} from 'rxjs';
 
 
@@ -12,10 +20,12 @@ export class ElevatorService {
   orderQueue = new OrdersQueue();
   elevatorControl = new Subject<ElevatorCommand>();
   floorControl = new Subject<FloorCommand>();
-  elevatorsStatus = elevatorsStatus;
+  elevatorsStatus: ElevatorStatus[] = getElevatorsStatus(3) ;
 
 
   constructor() {
+    console.log('hello');
+    console.log(this.elevatorsStatus[0].orders.orders);
     this.floorControl.subscribe(command => {
       if (command.floorToMove && !this.isElevatorOnFloor(command.floorToMove)) {
         this.addOrder(command.floorToMove);
@@ -23,8 +33,8 @@ export class ElevatorService {
       }
     });
     this.elevatorControl.subscribe(signal => {
-      if (signal.isAvailable) {
-        this.elevatorsStatus.status[signal.isAvailable - 1].available = true;
+      if (signal.elevatorReporting) {
+        // this.elevatorsStatus[signal.elevatorReporting - 1].available = true;
         this.floorControl.next({floorReached: signal.floorToMove});
         this.activateElevator();
       }
@@ -38,36 +48,35 @@ export class ElevatorService {
   }
 
   private activateElevator() {
-    if (this.isActiveElevator() && this.hasOrders()) {
-
+    if (this.hasOrders()) {
       const requestedFloor = this.orderQueue.getOrder();
+      console.log('activate elevator to floor ' + requestedFloor);
       const elevatorToMove = this.getClosestElevator(requestedFloor);
+
+      console.log('elevatorTo move', elevatorToMove);
       this.moveElevator(requestedFloor, elevatorToMove);
     }
   }
 
   private isActiveElevator(): boolean {
-    return !!this.elevatorsStatus.status.find(
+    return !!this.elevatorsStatus.find(
       status => status.available);
   }
 
   private getClosestElevator(floor: number): number {
-    const availableElevators = this.elevatorsStatus.status.filter(status => status.available && status.currentFloor !== floor);
-    if (this.isActiveElevator() && !availableElevators.length) {
-      this.floorControl.next({floorReached: floor});
-    }
-    return availableElevators.map(elevator => {
-        return {...elevator, distance: Math.abs(elevator.currentFloor - floor)};
-      }
-    )
-      .reduce((a, b) => a.distance > b.distance ? b : a).elevatorNumber;
-
+    console.log(this.elevatorsStatus.map(status => {
+      return {...status, timeFromFloor: this.calcTotalTimeFromFloor(floor, status)};
+    }).reduce((a, b) => a.timeFromFloor > b.timeFromFloor ? b : a));
+    return this.elevatorsStatus.map(status => {
+      return {...status, timeFromFloor: this.calcTotalTimeFromFloor(floor, status)};
+    }).reduce((a, b) => a.timeFromFloor > b.timeFromFloor ? b : a).elevatorNumber;
   }
 
   private moveElevator(requestedFloor: number, elevatorToMove: number): void {
+    console.log('sending ', elevatorToMove, 'to', requestedFloor);
     this.elevatorControl.next({floorToMove: requestedFloor, elevatorToMove: elevatorToMove});
-    this.elevatorsStatus.status[elevatorToMove - 1].available = false;
-    this.elevatorsStatus.status[elevatorToMove - 1].currentFloor = -1;
+    this.elevatorsStatus[elevatorToMove - 1].available = false;
+    this.elevatorsStatus[elevatorToMove - 1].currentFloor = -1;
   }
 
   private hasOrders() {
@@ -75,6 +84,13 @@ export class ElevatorService {
   }
 
   private isElevatorOnFloor(floorToMove: number) {
-    return this.elevatorsStatus.status.find(elevator => elevator.currentFloor === floorToMove);
+    return this.elevatorsStatus.find(elevator => elevator.currentFloor === floorToMove);
+  }
+
+  private calcTotalTimeFromFloor(floor: number, status: ElevatorStatus) {
+    const allOrders = [floor, ...status.orders.orders];
+    const timetillCurrentNextFloor = status.secondsToNextFloor;
+    return allOrders.map((elevatorStatus, index, array) => (array[index + 1] ?
+      Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) + timetillCurrentNextFloor;
   }
 }

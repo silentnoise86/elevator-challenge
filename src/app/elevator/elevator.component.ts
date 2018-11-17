@@ -1,18 +1,15 @@
 import {
-  AfterViewInit,
   ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
   NgZone,
-  OnChanges,
   OnInit,
-  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import {Subject} from 'rxjs';
 import {ElevatorService} from '../elevatorService';
-import {ElevatorCommand, ElevatorStatus} from '../ElevatorModels';
+import {ElevatorCommand, ElevatorStatus, OrdersQueue} from '../ElevatorModels';
 import {animate, state, style, transition, trigger, AnimationEvent} from '@angular/animations';
 
 
@@ -29,17 +26,19 @@ import {animate, state, style, transition, trigger, AnimationEvent} from '@angul
 })
 
 
-export class ElevatorComponent implements OnInit, AfterViewInit, OnChanges {
+export class ElevatorComponent implements OnInit {
   @Input() elevatorNumber: number;
   @ViewChild('elevatorElm') elevatorElm: ElementRef;
   elevatorControl: Subject<ElevatorCommand>;
   floorOrdered: number;
   currentFloor = 1;
-  floorheight = 114;
+  floorHeight = 114;
   distanceToMove = 'translateY(0)';
   shouldMove = false;
+  occupied = false;
   time = '4s';
   moveDuration = 0;
+  orders = new OrdersQueue();
 
   constructor(
     private elevatorService: ElevatorService,
@@ -53,29 +52,28 @@ export class ElevatorComponent implements OnInit, AfterViewInit, OnChanges {
     this.elevatorControl = this.elevatorService.elevatorControl;
     this.elevatorControl.subscribe(command => {
       if (command.elevatorToMove === this.elevatorNumber) {
-        this.moveElevator(command.floorToMove);
+        console.log(`elevator ${this.elevatorNumber} recieved order to floor ${command.floorToMove}`);
+        if (!this.occupied) {
+          console.log(`moving elevator ${this.elevatorNumber}`)
+          this.moveElevator(command.floorToMove);
+        } else {
+          console.log(`elevator ${this.elevatorNumber} adding to queue`);
+          this.getElevatorStatus().orders.addOrder(command.floorToMove);
+          console.log(this.getElevatorStatus().orders.orders);
+        }
       }
     });
-  }
-
-  ngOnChanges(event: SimpleChanges) {
-    console.log(event);
-  }
-  ngAfterViewInit() {
-
   }
 
   private moveElevator(floorToMove: number) {
     this.changeDetection.detectChanges();
     this.ngZone.run(() => {
-        if (this.isElevatorAvailable()) {
           this.floorOrdered = floorToMove;
-          const direction = this.currentFloor - this.floorOrdered < 0 ? 1 : -1;
-          this.distanceToMove = `translateY(${this.floorheight * (1 - this.floorOrdered)}px)`;
+          this.distanceToMove = `translateY(${this.floorHeight * (1 - this.floorOrdered)}px)`;
           this.time = `${Math.abs(this.currentFloor - this.floorOrdered) * 0.5}s`;
           this.startTimer();
           this.shouldMove = true;
-        }
+          this.occupied = true;
       }, this, [floorToMove]
     );
     this.changeDetection.detectChanges();
@@ -85,34 +83,44 @@ export class ElevatorComponent implements OnInit, AfterViewInit, OnChanges {
   onFloorReached(event: AnimationEvent) {
     this.ngZone.run(() => {
       if (event.fromState === 'static') {
+        console.log('should move', this.shouldMove);
         this.shouldMove = false;
         this.getElevatorStatus().currentFloor = this.floorOrdered;
         this.currentFloor = this.floorOrdered;
         setTimeout(() => {
-          this.elevatorControl.next({isAvailable: this.elevatorNumber, floorToMove: this.currentFloor});
+          this.occupied = false;
+          let isAvailable = false;
+          if (this.getElevatorStatus().orders.orders.length) {
+            this.moveElevator(this.getElevatorStatus().orders.getOrder());
+            isAvailable = true;
+          }
+          this.elevatorControl.next({elevatorReporting: this.elevatorNumber,
+            floorToMove: this.currentFloor, isAvailable: isAvailable});
         }, 2000);
       }
     }, this, [event]);
-
-
-  }
-
-  private isElevatorAvailable(): boolean {
-    return this.getElevatorStatus().available;
   }
 
   private getElevatorStatus(): ElevatorStatus {
-    return this.elevatorService.elevatorsStatus.status[this.elevatorNumber - 1];
+    console.log(this.elevatorService.elevatorsStatus[this.elevatorNumber - 1]);
+    return this.elevatorService.elevatorsStatus[this.elevatorNumber - 1];
   }
 
   private startTimer() {
-    this.moveDuration = Math.abs(this.currentFloor - this.floorOrdered);
-
+    this.moveDuration = Math.abs(this.currentFloor - this.floorOrdered) / 2;
     const interval = setInterval(() => {
-      if (this.moveDuration) {
-        this.moveDuration--;
+      if (this.moveDuration > 0) {
+        this.moveDuration -= 0.5;
+        this.getElevatorStatus().secondsToNextFloor = this.moveDuration + 2;
       } else {
         clearInterval(interval);
+        const floorDelay = setInterval(() => {
+          if (this.getElevatorStatus().secondsToNextFloor) {
+            this.getElevatorStatus().secondsToNextFloor -= 0.5;
+          } else {
+            clearInterval(floorDelay);
+          }
+        }, 500);
       }
     }, 500);
   }
