@@ -3,7 +3,7 @@ import {Subject} from 'rxjs';
 import {ElevatorService} from '../elevatorService';
 import {ElevatorCommand, ElevatorStatus} from '../ElevatorModels';
 import {animate, state, style, transition, trigger, AnimationEvent} from '@angular/animations';
-import {ChangeDetection} from '@angular/cli/lib/config/schema';
+
 
 
 @Component({
@@ -13,7 +13,7 @@ import {ChangeDetection} from '@angular/cli/lib/config/schema';
   animations: [trigger('elevatorMove', [
     state('moving', style({transform: `{{distanceToMove}}`}), {params: {distanceToMove: 'translateY(0)'}}),
     transition('*=> moving',
-      animate('4s 100ms ease-out'))
+      animate('{{animateTime}}'), {params: {animateTime: '4s 100ms ease-out'}})
   ])]
 })
 
@@ -28,7 +28,7 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
   floorheight = 114;
   distanceToMove = 'translateY(0)';
   shouldMove = false;
-
+  animateTime = '4s 100ms ease-out';
   constructor(
     private elevatorService: ElevatorService,
     private ngZone: NgZone,
@@ -62,6 +62,7 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
           console.log(this.currentFloor);
           this.distanceToMove = `translateY(${this.floorheight * (1 - this.floorOrdered)}px)`;
           console.log(this.distanceToMove);
+          this.animateTime = `${Math.abs(this.currentFloor - this.floorOrdered) * 0.5} 100ms ease-out `;
           this.shouldMove = true;
         }
       }, this, [floorToMove]
