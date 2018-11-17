@@ -1,8 +1,9 @@
-import {AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone, OnInit, ViewChild} from '@angular/core';
 import {Subject} from 'rxjs';
 import {ElevatorService} from '../elevatorService';
 import {ElevatorCommand, ElevatorStatus} from '../ElevatorModels';
 import {animate, state, style, transition, trigger, AnimationEvent} from '@angular/animations';
+import {ChangeDetection} from '@angular/cli/lib/config/schema';
 
 
 @Component({
@@ -12,7 +13,7 @@ import {animate, state, style, transition, trigger, AnimationEvent} from '@angul
   animations: [trigger('elevatorMove', [
     state('moving', style({transform: `{{distanceToMove}}`}), {params: {distanceToMove: 'translateY(0)'}}),
     transition('*=> moving',
-      animate('2s 100ms ease-out'))
+      animate('4s 100ms ease-out'))
   ])]
 })
 
@@ -29,7 +30,9 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
   shouldMove = false;
 
   constructor(
-    private elevatorService: ElevatorService
+    private elevatorService: ElevatorService,
+    private ngZone: NgZone,
+    private changeDetection: ChangeDetectorRef
   ) {
 
   }
@@ -49,27 +52,42 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
   }
 
   private moveElevator(floorToMove: number) {
-    console.log('move elevator called with' + floorToMove);
-    if (this.isElevatorAvailable()) {
-      console.log(`elevator ${this.elevatorNumber} called to floor ${floorToMove} its current floor is ${this.currentFloor}`);
-      this.floorOrdered = floorToMove;
-      const direction = this.currentFloor - this.floorOrdered < 0 ? 1 : -1;
-      console.log(this.currentFloor);
-      this.distanceToMove = `translateY(${this.floorheight * (1- this.floorOrdered)}px)`;
-      console.log(this.distanceToMove);
-      this.shouldMove = true;
+    this.changeDetection.detectChanges();
+    this.ngZone.run(() => {
+        console.log('move elevator called with' + floorToMove);
+        if (this.isElevatorAvailable()) {
+          console.log(`elevator ${this.elevatorNumber} called to floor ${floorToMove} its current floor is ${this.currentFloor}`);
+          this.floorOrdered = floorToMove;
+          const direction = this.currentFloor - this.floorOrdered < 0 ? 1 : -1;
+          console.log(this.currentFloor);
+          this.distanceToMove = `translateY(${this.floorheight * (1 - this.floorOrdered)}px)`;
+          console.log(this.distanceToMove);
+          this.shouldMove = true;
+        }
+      }, this, [floorToMove]
+    );
+    this.changeDetection.detectChanges();
 
-    }
   }
 
   onFloorReached(event: AnimationEvent) {
-    if (event.fromState === 'static') {
-      this.shouldMove = false;
-      this.getElevatorStatus().currentFloor = this.floorOrdered;
-      this.currentFloor = this.floorOrdered;
-      this.elevatorControl.next({isAvailable: this.elevatorNumber, floorToMove: this.currentFloor});
-      console.log(this.elevatorService.elevatorsStatus.status);
-    }
+    this.ngZone.run(() => {
+      if (event.fromState === 'static') {
+        console.log('static called for elevator' + this.elevatorNumber);
+        this.shouldMove = false;
+        this.getElevatorStatus().currentFloor = this.floorOrdered;
+        this.currentFloor = this.floorOrdered;
+        this.elevatorControl.next({isAvailable: this.elevatorNumber, floorToMove: this.currentFloor});
+        console.log(this.elevatorService.elevatorsStatus.status);
+      }
+      if (event.toState === 'moving' && this.floorOrdered === 5 && this.elevatorNumber === 1) {
+        console.log('here');
+        console.log('distance to move', this.distanceToMove);
+        console.log('should move', this.shouldMove);
+      }
+    }, this, [event]);
+
+
   }
 
   private isElevatorAvailable(): boolean {
@@ -81,12 +99,11 @@ export class ElevatorComponent implements OnInit, AfterViewInit {
   }
 
   logEvent($event: AnimationEvent) {
-    if ($event.fromState === 'static') {
-      console.log($event);
-    }
+    console.log($event);
 
   }
-  calcFloorHeight(){
-    return ;
+
+  calcFloorHeight() {
+    return;
   }
 }

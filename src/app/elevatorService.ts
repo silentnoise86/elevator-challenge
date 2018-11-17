@@ -17,7 +17,7 @@ export class ElevatorService {
 
   constructor() {
     this.floorControl.subscribe(command => {
-      if (command.floorToMove) {
+      if (command.floorToMove && !this.isElevatorOnFloor(command.floorToMove)) {
         this.addOrder(command.floorToMove);
         this.activateElevator();
       }
@@ -39,7 +39,7 @@ export class ElevatorService {
 
   private activateElevator() {
     if (this.isActiveElevator() && this.hasOrders()) {
-      console.log(this.orderQueue);
+
       const requestedFloor = this.orderQueue.getOrder();
       console.log(this.orderQueue);
       const elevatorToMove = this.getClosestElevator(requestedFloor);
@@ -68,9 +68,14 @@ export class ElevatorService {
   private moveElevator(requestedFloor: number, elevatorToMove: number): void {
     this.elevatorControl.next({floorToMove: requestedFloor, elevatorToMove: elevatorToMove});
     this.elevatorsStatus.status[elevatorToMove - 1].available = false;
+    this.elevatorsStatus.status[elevatorToMove - 1].currentFloor = -1;
   }
 
   private hasOrders() {
     return this.orderQueue.orders.length;
+  }
+
+  private isElevatorOnFloor(floorToMove: number) {
+    return this.elevatorsStatus.status.find(elevator => elevator.currentFloor === floorToMove);
   }
 }
