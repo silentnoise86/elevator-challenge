@@ -1,8 +1,6 @@
 import {Injectable} from '@angular/core';
 import {
   ElevatorCommand,
-  ElevatorsStatus,
-  elevatorsStatus,
   ElevatorStatus,
   FloorCommand,
   getElevatorsStatus,
@@ -20,12 +18,10 @@ export class ElevatorService {
   orderQueue = new OrdersQueue();
   elevatorControl = new Subject<ElevatorCommand>();
   floorControl = new Subject<FloorCommand>();
-  elevatorsStatus: ElevatorStatus[] = getElevatorsStatus(5) ;
+  elevatorsStatus: ElevatorStatus[] = getElevatorsStatus(3);
 
 
   constructor() {
-    console.log('hello');
-    console.log(this.elevatorsStatus[0].orders.orders);
     this.floorControl.subscribe(command => {
       if (command.floorToMove && !this.isElevatorOnFloor(command.floorToMove)) {
         this.addOrder(command.floorToMove);
@@ -83,9 +79,11 @@ export class ElevatorService {
   }
 
   private calcTotalTimeFromFloor(floor: number, status: ElevatorStatus) {
-    const allOrders = [floor, ...status.orders.orders, status.currentFloor];
-    const timetillCurrentNextFloor = status.secondsToNextFloor;
-    return allOrders.map((elevatorStatus, index, array) => (array[index + 1] ?
-      Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) + timetillCurrentNextFloor;
+    const allOrders = [...status.orders.orders];
+    const distanceFromcurrentFloor = status.nextFloor ? Math.abs(status.nextFloor - floor) / 2 : Math.abs(status.currentFloor - floor) / 2;
+    const timetillCurrentNextFloor = status.secondsToNextFloor ? status.secondsToNextFloor + 2  : 0;
+    const allOrdersReduced = allOrders.length ? allOrders.map((elevatorStatus, index, array) => (array[index + 1] ?
+      Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) : 0;
+    return timetillCurrentNextFloor + allOrdersReduced + distanceFromcurrentFloor;
   }
 }

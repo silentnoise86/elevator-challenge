@@ -15,7 +15,7 @@ export class AppComponent implements OnInit {
     private elevatorService: ElevatorService
   ) {
     this.floors = this.createNumArray(50);
-    this.elevators = this.createNumArray(5);
+    this.elevators = this.createNumArray(3);
   }
 
   ngOnInit() {

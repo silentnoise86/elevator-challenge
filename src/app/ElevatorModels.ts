@@ -20,6 +20,7 @@ export class OrdersQueue {
 }
 export class ElevatorStatus {
   elevatorNumber: number;
+  nextFloor: number;
   available = true;
   currentFloor = 1;
   secondsToNextFloor = 0;

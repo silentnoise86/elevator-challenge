@@ -52,12 +52,12 @@ export class ElevatorComponent implements OnInit {
     this.elevatorControl = this.elevatorService.elevatorControl;
     this.elevatorControl.subscribe(command => {
       if (command.elevatorToMove === this.elevatorNumber) {
-        console.log(`elevator ${this.elevatorNumber} recieved order to floor ${command.floorToMove}`);
+
         if (!this.occupied) {
-          console.log(`moving elevator ${this.elevatorNumber}`)
+
           this.moveElevator(command.floorToMove);
         } else {
-          console.log(`elevator ${this.elevatorNumber} adding to queue`);
+
           this.getElevatorStatus().orders.addOrder(command.floorToMove);
           console.log(this.getElevatorStatus().orders.orders);
         }
@@ -69,6 +69,7 @@ export class ElevatorComponent implements OnInit {
     this.changeDetection.detectChanges();
     this.ngZone.run(() => {
           this.floorOrdered = floorToMove;
+      this.getElevatorStatus().nextFloor = floorToMove;
           this.distanceToMove = `translateY(${this.floorHeight * (1 - this.floorOrdered)}px)`;
           this.time = `${Math.abs(this.currentFloor - this.floorOrdered) * 0.5}s`;
           this.startTimer();
@@ -83,10 +84,10 @@ export class ElevatorComponent implements OnInit {
   onFloorReached(event: AnimationEvent) {
     this.ngZone.run(() => {
       if (event.fromState === 'static') {
-        console.log('should move', this.shouldMove);
         this.shouldMove = false;
         this.getElevatorStatus().currentFloor = this.floorOrdered;
         this.currentFloor = this.floorOrdered;
+        this.getElevatorStatus().nextFloor = null;
         this.getElevatorStatus().secondsToNextFloor = 0;
         setTimeout(() => {
           this.occupied = false;
@@ -95,6 +96,7 @@ export class ElevatorComponent implements OnInit {
             this.moveElevator(this.getElevatorStatus().orders.getOrder());
             isAvailable = true;
           }
+          this.playAudio();
           this.elevatorControl.next({elevatorReporting: this.elevatorNumber,
             floorToMove: this.currentFloor, isAvailable: isAvailable});
         }, 2000);
@@ -107,6 +109,12 @@ export class ElevatorComponent implements OnInit {
     return this.elevatorService.elevatorsStatus[this.elevatorNumber - 1];
   }
 
+  private playAudio() {
+    const audio = new Audio();
+    audio.src = '/../../assets/ding.mp3';
+    audio.load();
+    audio.play();
+  }
   private startTimer() {
     this.moveDuration = Math.abs(this.currentFloor - this.floorOrdered) / 2;
     const interval = setInterval(() => {
