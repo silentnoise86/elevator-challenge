@@ -1,5 +1,4 @@
 import {Component, OnInit} from '@angular/core';
-import {ElevatorService} from './elevatorService';
 
 @Component({
   selector: 'app-root',
@@ -7,12 +6,11 @@ import {ElevatorService} from './elevatorService';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  title = 'elevators';
   floors: number[];
   elevators: number[];
 
   constructor(
-    private elevatorService: ElevatorService
+
   ) {
     this.floors = this.createNumArray(50);
     this.elevators = this.createNumArray(3);

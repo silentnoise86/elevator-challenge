@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {ElevatorService} from '../elevatorService';
+import {ElevatorsService} from '../elevators.service';
 import {Subject} from 'rxjs';
-import {FloorCommand} from '../ElevatorModels';
+import {FloorCommand} from '../elevator.models';
 
 @Component({
   selector: 'app-floor',
@@ -14,7 +14,7 @@ export class FloorComponent implements OnInit {
   floorOrdered = false;
   elevatorOnCurrentFloor = this.floorNumber === 1;
   constructor(
-    private elevatorService: ElevatorService
+    private elevatorService: ElevatorsService
   ) {
     this.floorCommand = this.elevatorService.floorControl;
   }

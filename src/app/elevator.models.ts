@@ -1,5 +1,5 @@
 import {animate, state, style, transition, trigger} from '@angular/animations';
-import {el} from '@angular/platform-browser/testing/src/browser_util';
+
 
 export class OrdersQueue {
   orders = [];
@@ -27,7 +27,7 @@ export class ElevatorStatus {
   orders: OrdersQueue;
   constructor(elevatorNumber: number) {
     this.elevatorNumber = elevatorNumber;
-
+    this.orders = new OrdersQueue();
 
   }
 

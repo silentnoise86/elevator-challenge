@@ -8,9 +8,11 @@ import {
   ViewChild
 } from '@angular/core';
 import {Subject} from 'rxjs';
-import {ElevatorService} from '../elevatorService';
-import {ElevatorCommand, ElevatorStatus, OrdersQueue} from '../ElevatorModels';
+import {ElevatorsService} from '../elevators.service';
+import {ElevatorCommand, ElevatorStatus, OrdersQueue} from '../elevator.models';
 import {animate, state, style, transition, trigger, AnimationEvent} from '@angular/animations';
+import {SoundService} from '../sound.service';
+import {CalcUtilService} from '../calc.util.service';
 
 
 @Component({
@@ -41,7 +43,8 @@ export class ElevatorComponent implements OnInit {
   orders = new OrdersQueue();
 
   constructor(
-    private elevatorService: ElevatorService,
+    private elevatorService: ElevatorsService,
+    private soundService: SoundService,
     private ngZone: NgZone,
     private changeDetection: ChangeDetectorRef
   ) {
@@ -52,9 +55,7 @@ export class ElevatorComponent implements OnInit {
     this.elevatorControl = this.elevatorService.elevatorControl;
     this.elevatorControl.subscribe(command => {
       if (command.elevatorToMove === this.elevatorNumber) {
-
         if (!this.occupied) {
-
           this.moveElevator(command.floorToMove);
         } else {
 
@@ -89,6 +90,7 @@ export class ElevatorComponent implements OnInit {
         this.currentFloor = this.floorOrdered;
         this.getElevatorStatus().nextFloor = null;
         this.getElevatorStatus().secondsToNextFloor = 0;
+        this.playAudio();
         setTimeout(() => {
           this.occupied = false;
           let isAvailable = false;
@@ -96,8 +98,7 @@ export class ElevatorComponent implements OnInit {
             this.moveElevator(this.getElevatorStatus().orders.getOrder());
             isAvailable = true;
           }
-          this.playAudio();
-          this.elevatorControl.next({elevatorReporting: this.elevatorNumber,
+         this.elevatorControl.next({elevatorReporting: this.elevatorNumber,
             floorToMove: this.currentFloor, isAvailable: isAvailable});
         }, 2000);
       }
@@ -105,22 +106,19 @@ export class ElevatorComponent implements OnInit {
   }
 
   private getElevatorStatus(): ElevatorStatus {
-    console.log(this.elevatorService.elevatorsStatus[this.elevatorNumber - 1]);
     return this.elevatorService.elevatorsStatus[this.elevatorNumber - 1];
   }
 
   private playAudio() {
-    const audio = new Audio();
-    audio.src = '/../../assets/ding.mp3';
-    audio.load();
-    audio.play();
+    this.soundService.playAudio();
   }
   private startTimer() {
-    this.moveDuration = Math.abs(this.currentFloor - this.floorOrdered) / 2;
+    this.moveDuration = CalcUtilService.getMoveDuration(this.currentFloor, this.floorOrdered);
     const interval = setInterval(() => {
-      if (this.moveDuration > 0) {
+      if (this.moveDuration) {
         this.moveDuration -= 0.5;
         this.getElevatorStatus().secondsToNextFloor = this.moveDuration + 2;
+
       } else {
         clearInterval(interval);
         const floorDelay = setInterval(() => {
