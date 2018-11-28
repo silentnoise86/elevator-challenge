@@ -18,6 +18,7 @@ export class OrdersQueue {
     return this.orders.pop();
   }
 }
+
 export class ElevatorStatus {
   elevatorNumber: number;
   nextFloor: number;
@@ -25,6 +26,7 @@ export class ElevatorStatus {
   currentFloor = 1;
   secondsToNextFloor = 0;
   orders: OrdersQueue;
+
   constructor(elevatorNumber: number) {
     this.elevatorNumber = elevatorNumber;
     this.orders = new OrdersQueue();
@@ -41,32 +43,37 @@ export interface ElevatorCommand {
   elevatorReporting?: number;
   queue?: number[];
 }
+
 export interface FloorCommand {
-   floorToMove?: number;
-   floorHeight?: string;
-   floorReached?: number;
+  floorToMove?: number;
+  floorHeight?: string;
+  floorReached?: number;
 }
 
 
 export class ElevatorsStatus {
+  status: ElevatorStatus[];
+
   constructor(status: ElevatorStatus[]) {
     this.status = status;
   }
 
-  status: ElevatorStatus[];
+  getStatus(elevatorNum: number) {
+    this.status.find(elevator => elevator.elevatorNumber === elevatorNum);
+  }
 }
 
-export const elevatorsStatus = [{...new ElevatorStatus(1), orders: new OrdersQueue()}, new ElevatorStatus(2), new ElevatorStatus(3)];
-export const getElevatorsStatus = function (numOfElevators: number) {
+
+export const getElevatorsStatus = function (numOfElevators: number): ElevatorStatus[] {
   return Array(numOfElevators).fill(0).map((_, index) => {
     return {...new ElevatorStatus(index + 1), orders: new OrdersQueue()};
   });
 };
 
 
-export const elevatorAnimation =  trigger('elevatorMove', [
-    state('moving', style({transform: 'translateY(0)' })),
-    transition('moving=> *',
-      animate('2s 100ms ease-out'))
-  ]);
+export const elevatorAnimation = trigger('elevatorMove', [
+  state('moving', style({transform: 'translateY(0)'})),
+  transition('moving=> *',
+    animate('2s 100ms ease-out'))
+]);
 

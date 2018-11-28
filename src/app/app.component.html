@@ -13,9 +13,9 @@
     </div>
   </div>
   <div class="elevators-container">
-  <div *ngFor="let elevator of elevators "  >
+  <div *ngFor="let status of elevatorsSubject | async"  >
     <app-elevator
-    [elevatorNumber]="elevator+1"
+    [status] =status
     ></app-elevator>
   </div>
   </div>
