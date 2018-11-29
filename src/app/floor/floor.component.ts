@@ -1,43 +1,37 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {ElevatorsService} from '../elevators.service';
-import {Subject} from 'rxjs';
-import {FloorCommand} from '../elevator.models';
+import {Component, EventEmitter, Input, Output, OnChanges, SimpleChanges} from '@angular/core';
+
+
+import {FloorStatus} from '../elevator.models';
 
 @Component({
   selector: 'app-floor',
   templateUrl: './floor.component.html',
   styleUrls: ['./floor.component.scss']
 })
-export class FloorComponent implements OnInit {
-  @Input() floorNumber: number;
-  floorCommand: Subject<FloorCommand>;
-  floorOrdered = false;
-  elevatorOnCurrentFloor = this.floorNumber === 1;
-  constructor(
-    private elevatorService: ElevatorsService
-  ) {
-    this.floorCommand = this.elevatorService.floorControl;
+export class FloorComponent implements  OnChanges {
+  @Input() status: FloorStatus;
+  @Output() floorCommand: EventEmitter<number> = new EventEmitter();
+  floorNumber: number;
+
+  constructor() {
+
   }
 
-  ngOnInit() {
-    //  this.floorCommand.subscribe(signal => {
-    //   if (signal.floorReached && signal.floorReached === this.floorNumber) {
-    //     this.floorOrdered = false;
-    //   }
-    // });
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (!this.floorNumber) {
+      this.floorNumber = this.status.number;
+    }
+
   }
 
-  //
-  // orderElevator() {
-  //   console.log('************************************************');
-  //   console.log(!this.elevatorOnFloor() && !this.floorOrdered);
-  //   console.log('************************************************');
-  //   if (!this.elevatorOnFloor() && !this.floorOrdered) {
-  //     this.floorOrdered = true;
-  //     this.floorCommand.next({floorHeight: (107 * this.floorNumber).toString() + 'px', floorToMove: this.floorNumber});
-  //   }
-  // }
-  //
+
+  orderElevator() {
+    if (this.status.canOrder()) {
+      this.floorCommand.emit(this.status.number);
+    }
+  }
+
   // private elevatorOnFloor() {
   //   console.log(this.elevatorService.elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber));
   //   return this.elevatorService.elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber);

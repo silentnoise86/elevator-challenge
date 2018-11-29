@@ -1,23 +1,25 @@
 <div class="building-container">
   <audio id="ding">
 
-    <source src="/../ding.mp3" type="audio/mpeg">
+    <source src="/src/assets/ding.mp3" type="audio/mpeg">
   </audio>
   <div class="floor-container">
-    <div *ngFor="let floor of floors ">
-      <div >
-      <app-floor
-      [floorNumber]="floor+1"
-      ></app-floor>
+    <div *ngFor="let floor of floorsSubject | async ">
+      <div>
+        <app-floor
+          [status]="floor"
+          (floorCommand)="onFloorCommand($event)"
+        ></app-floor>
       </div>
     </div>
   </div>
   <div class="elevators-container">
-  <div *ngFor="let status of elevatorsSubject | async"  >
-    <app-elevator
-    [status] =status
-    ></app-elevator>
-  </div>
+    <div *ngFor="let status of elevatorsSubject | async">
+      <app-elevator
+        [status]=status
+
+      ></app-elevator>
+    </div>
   </div>
 </div>
 

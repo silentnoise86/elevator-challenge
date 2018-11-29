@@ -1,9 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ElevatorsService} from './elevators.service';
-import {UtilService} from './utilService';
-import {BehaviorSubject, Observable} from 'rxjs';
-import {ElevatorsStatus, ElevatorStatus} from './elevator.models';
-import {map} from 'rxjs/operators';
+import {Observable} from 'rxjs';
+import {Status} from './elevator.models';
 
 
 @Component({
@@ -12,23 +10,22 @@ import {map} from 'rxjs/operators';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  floors: number[];
-  elevatorsSubject: Observable<ElevatorStatus[]>;
+  floorsSubject: Observable<Status[]>;
+  elevatorsSubject: Observable<Status[]>;
 
   constructor(
     private elevatorService: ElevatorsService
   ) {
-    this.floors = UtilService.createNumArray(50);
+
   }
 
   ngOnInit() {
-    this.elevatorsSubject = this.elevatorService.elevatorsStatus.pipe(map(status => status.status));
+    this.elevatorsSubject = this.elevatorService.elevatorsStatus;
+    this.floorsSubject = this.elevatorService.floorStatus;
   }
-  //
-  // getElevatorStatus(elevatorNum) {
-  //   console.log('called');
-  //   this.elevatorsSubject.pipe(map(statusContainer => statusContainer.getStatus(elevatorNum)));
-  // }
 
 
+  onFloorCommand($event: number) {
+    this.elevatorService.updateFloorOrder($event);
+  }
 }

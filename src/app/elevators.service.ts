@@ -2,10 +2,11 @@ import {Injectable} from '@angular/core';
 import {
   ElevatorCommand, ElevatorsStatus,
   ElevatorStatus,
-  FloorCommand,
+  FloorStatus, Status,
 } from './elevator.models';
-import {BehaviorSubject, Subject} from 'rxjs';
+import {BehaviorSubject, pipe, Subject} from 'rxjs';
 import {UtilService} from './utilService';
+import {map, tap} from 'rxjs/operators';
 
 
 @Injectable({
@@ -15,49 +16,22 @@ export class ElevatorsService {
 
 
   elevatorControl = new Subject<ElevatorCommand>();
-  floorControl = new Subject<FloorCommand>();
-  elevatorsStatus: BehaviorSubject<ElevatorsStatus>;
-
+  floorControl = new Subject<FloorStatus>();
+  elevatorsStatus: BehaviorSubject<ElevatorStatus[]>;
+  floorStatus: BehaviorSubject<FloorStatus[]>;
+  elevatorsNum = 3;
+  floorsNum = 40;
 
   constructor() {
-    this.elevatorsStatus = this.initElevatorsStatus();
-    console.log(this.elevatorsStatus);
-    // this.floorControl.subscribe(command => {
-    //   if (command.floorToMove) {
-    //     this.activateElevator(command.floorToMove);
-    //   }
-    // });
-    // this.elevatorControl.subscribe(signal => {
-    //   if (signal.elevatorReporting) {
-    //     // this.elevatorsStatus[signal.elevatorReporting - 1].available = true;
-    //     this.floorControl.next({floorReached: signal.floorToMove});
-    //   }
-    // });
+    this.elevatorsStatus = this.initStatus(ElevatorStatus, this.elevatorsNum);
+    this.floorStatus = this.initStatus(FloorStatus, this.floorsNum);
   }
-  //
-  // private activateElevator(floorToMove: number) {
-  //   const elevatorToMove = this.getClosestElevator(floorToMove);
-  //   this.moveElevator(floorToMove, elevatorToMove);
-  //
-  // }
-  //
-  // private getClosestElevator(floor: number): number {
-  //   return this.elevatorsStatus.map(status => {
-  //     return {...status, timeFromFloor: this.calcTotalTimeFromFloor(floor, status)};
-  //   }).reduce((a, b) => a.timeFromFloor > b.timeFromFloor ? b : a).elevatorNumber;
-  // }
-  //
-  // private moveElevator(requestedFloor: number, elevatorToMove: number): void {
-  //   this.elevatorControl.next({floorToMove: requestedFloor, elevatorToMove: elevatorToMove});
-  //   this.elevatorsStatus[elevatorToMove - 1].available = false;
-  //
-  // }
-  //
-  private initElevatorsStatus(): BehaviorSubject<ElevatorsStatus> {
-    return new BehaviorSubject(new ElevatorsStatus
-    (UtilService.createNumArray(3).map(num => new ElevatorStatus(num))));
 
+  private initStatus(statusType: any, count: number): BehaviorSubject<any[]> {
+    return new BehaviorSubject((UtilService.createNumArray(count).map(num => new statusType(num))
+    ));
   }
+
   //
   //
   // private calcTotalTimeFromFloor(floor: number, status: ElevatorStatus) {
@@ -68,4 +42,30 @@ export class ElevatorsService {
   //     Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) : 0;
   //   return timeTillCurrentNextFloor + allOrdersReduced + distanceFromFloorOrdered;
   // }
+  updateFloorOrder($event: number) {
+    const floorStatusChanged = {...(new FloorStatus($event)), ordered: true};
+    // console.log(fl)
+    // this.floorStatus.next([...this.floorStatus.value, floorStatusChanged]);
+    this.floorStatus.pipe(
+      map(floorStatus => [...floorStatus, {...floorStatus.find(status => status.number === $event), ordered: true}]),
+      tap(status => this.floorStatus.next(status)),
+      tap(
+        floorStatus => {
+          const updatedElevatorStatus = this.elevatorsStatus.getValue()
+            .find(elevStatus => elevStatus.number === this.getClosestElevator($event).number);
+          updatedElevatorStatus.moveElevator($event);
+          this.elevatorsStatus.next([...this.elevatorsStatus.getValue(), updatedElevatorStatus]);
+
+        }
+      ),
+    );
+
+    this.elevatorsStatus.next([...this.elevatorsStatus.value]);
+  }
+
+  private getClosestElevator(floorNumber: number): ElevatorStatus {
+    return this.elevatorsStatus.getValue().find(status => {
+      return status.number === 1;
+    });
+  }
 }

@@ -2,8 +2,8 @@ import {
   ChangeDetectorRef,
   Component,
   Input,
-  NgZone,
-  OnInit
+  NgZone, OnChanges,
+  OnInit, SimpleChanges
 } from '@angular/core';
 import {Observable, Subject} from 'rxjs';
 import {ElevatorsService} from '../elevators.service';
@@ -26,10 +26,10 @@ import {UtilService} from '../utilService';
 })
 
 
-export class ElevatorComponent implements OnInit {
+export class ElevatorComponent implements OnInit, OnChanges {
 
-  @Input() status: Observable<ElevatorStatus>;
-  elevatorControl: Subject<ElevatorCommand>;
+  @Input() status: Subject<ElevatorStatus>;
+
   // elevatorNumber: number;
   // floorOrdered: number;
   // currentFloor = 1;
@@ -41,12 +41,7 @@ export class ElevatorComponent implements OnInit {
   // moveDuration = 0;
 
 
-  constructor(
-    private elevatorService: ElevatorsService,
-    private soundService: SoundService,
-    private ngZone: NgZone,
-    private changeDetection: ChangeDetectorRef
-  ) {
+  constructor() {
 
   }
 
@@ -55,6 +50,13 @@ export class ElevatorComponent implements OnInit {
 
     console.log('hello');
   }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.status) {
+      console.log(this.status);
+    }
+  }
+
   //
   // private moveElevator(floorToMove: number) {
   //   this.changeDetection.detectChanges();

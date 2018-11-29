@@ -17,10 +17,14 @@ export class OrdersQueue {
   getOrder(): number {
     return this.orders.pop();
   }
+
+  hasOrders(): boolean {
+    return !!this.orders.length;
+  }
 }
 
-export class ElevatorStatus {
-  elevatorNumber: number;
+export class ElevatorStatus implements Status {
+  number: number;
   nextFloor: number;
   available = true;
   currentFloor = 1;
@@ -28,12 +32,22 @@ export class ElevatorStatus {
   orders: OrdersQueue;
 
   constructor(elevatorNumber: number) {
-    this.elevatorNumber = elevatorNumber;
+    this.number = elevatorNumber;
     this.orders = new OrdersQueue();
 
   }
 
+  moveElevator(floorOrdered: number) {
+    if (this.orders.hasOrders() || this.nextFloor) {
+      this.orders.addOrder(floorOrdered);
+    }
+  }
 
+
+}
+
+export interface Status {
+  number: number;
 }
 
 export interface ElevatorCommand {
@@ -44,10 +58,21 @@ export interface ElevatorCommand {
   queue?: number[];
 }
 
-export interface FloorCommand {
-  floorToMove?: number;
+export class FloorStatus implements Status {
+  number: number;
+  ordered: boolean;
   floorHeight?: string;
-  floorReached?: number;
+  elevatorOnFloor: boolean;
+
+  constructor(floorNumber) {
+    this.number = floorNumber;
+    this.floorHeight = (107 * this.number).toString() + 'px';
+
+  }
+
+  canOrder(): boolean {
+    return !(this.ordered || this.elevatorOnFloor);
+  }
 }
 
 
@@ -59,16 +84,16 @@ export class ElevatorsStatus {
   }
 
   getStatus(elevatorNum: number) {
-    this.status.find(elevator => elevator.elevatorNumber === elevatorNum);
+    this.status.find(elevator => elevator.number === elevatorNum);
   }
 }
 
-
-export const getElevatorsStatus = function (numOfElevators: number): ElevatorStatus[] {
-  return Array(numOfElevators).fill(0).map((_, index) => {
-    return {...new ElevatorStatus(index + 1), orders: new OrdersQueue()};
-  });
-};
+//
+// export const getElevatorsStatus = function (numOfElevators: number): ElevatorStatus[] {
+//   return Array(numOfElevators).fill(0).map((_, index) => {
+//     return {...new ElevatorStatus(index + 1), orders: new OrdersQueue()};
+//   });
+// };
 
 
 export const elevatorAnimation = trigger('elevatorMove', [
