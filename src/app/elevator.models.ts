@@ -1,4 +1,6 @@
 import {animate, state, style, transition, trigger} from '@angular/animations';
+import {UtilService} from './utilService';
+import {ElevatorStatus} from './elevator/elevator.status';
 
 
 export class OrdersQueue {
@@ -23,28 +25,7 @@ export class OrdersQueue {
   }
 }
 
-export class ElevatorStatus implements Status {
-  number: number;
-  nextFloor: number;
-  available = true;
-  currentFloor = 1;
-  secondsToNextFloor = 0;
-  orders: OrdersQueue;
 
-  constructor(elevatorNumber: number) {
-    this.number = elevatorNumber;
-    this.orders = new OrdersQueue();
-
-  }
-
-  moveElevator(floorOrdered: number) {
-    if (this.orders.hasOrders() || this.nextFloor) {
-      this.orders.addOrder(floorOrdered);
-    }
-  }
-
-
-}
 
 export interface Status {
   number: number;
@@ -60,18 +41,23 @@ export interface ElevatorCommand {
 
 export class FloorStatus implements Status {
   number: number;
-  ordered: boolean;
+  ordered = false;
   floorHeight?: string;
   elevatorOnFloor: boolean;
 
   constructor(floorNumber) {
     this.number = floorNumber;
     this.floorHeight = (107 * this.number).toString() + 'px';
+    this.elevatorOnFloor = this.number === 0;
 
   }
 
   canOrder(): boolean {
     return !(this.ordered || this.elevatorOnFloor);
+  }
+
+  setOrder() {
+    this.ordered = true;
   }
 }
 

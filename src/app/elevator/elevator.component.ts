@@ -7,10 +7,11 @@ import {
 } from '@angular/core';
 import {Observable, Subject} from 'rxjs';
 import {ElevatorsService} from '../elevators.service';
-import {ElevatorCommand, ElevatorStatus} from '../elevator.models';
+import {ElevatorCommand} from '../elevator.models';
 import {animate, state, style, transition, trigger, AnimationEvent} from '@angular/animations';
 import {SoundService} from '../sound.service';
 import {UtilService} from '../utilService';
+import {ElevatorStatus} from './elevator.status';
 
 
 @Component({
