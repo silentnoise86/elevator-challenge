@@ -1,17 +1,18 @@
 import {Component, EventEmitter, Input, Output, OnChanges, SimpleChanges} from '@angular/core';
+import {FloorStatus} from './floor.status';
 
-
-import {FloorStatus} from '../elevator.models';
 
 @Component({
   selector: 'app-floor',
   templateUrl: './floor.component.html',
   styleUrls: ['./floor.component.scss']
 })
-export class FloorComponent implements  OnChanges {
+export class FloorComponent implements OnChanges {
   @Input() status: FloorStatus;
+  @Input() ordered: boolean;
   @Output() floorCommand: EventEmitter<number> = new EventEmitter();
   floorNumber: number;
+  floorOrdered = false;
 
   constructor() {
 
@@ -19,21 +20,32 @@ export class FloorComponent implements  OnChanges {
 
 
   ngOnChanges(changes: SimpleChanges) {
+    console.log(new Date().getTime());
+    console.log('in ngonchanges');
     if (!this.floorNumber) {
       this.floorNumber = this.status.number;
     }
+    // if (!changes.elevatorOnFloor.isFirstChange()) {
+    //   this.elevatorOnFloor = this.status.ordered;
+    //   console.log(this.elevatorOnFloor);
+    // }
 
   }
 
 
   orderElevator() {
     if (this.status.canOrder()) {
+      this.floorOrdered = true;
       this.floorCommand.emit(this.status.number);
     }
   }
 
+  isElevatorOnFloor(changes: SimpleChanges): boolean {
+    return !changes.elevatorOnFloor.currentValue;
+  }
+
   // private elevatorOnFloor() {
-  //   console.log(this.elevatorService.elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber));
-  //   return this.elevatorService.elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber);
+  //   console.log(this.elevatorService.$elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber));
+  //   return this.elevatorService.$elevatorsStatus.find(elevator => elevator.currentFloor === this.floorNumber);
   // }
 }

@@ -39,27 +39,6 @@ export interface ElevatorCommand {
   queue?: number[];
 }
 
-export class FloorStatus implements Status {
-  number: number;
-  ordered = false;
-  floorHeight?: string;
-  elevatorOnFloor: boolean;
-
-  constructor(floorNumber) {
-    this.number = floorNumber;
-    this.floorHeight = (107 * this.number).toString() + 'px';
-    this.elevatorOnFloor = this.number === 0;
-
-  }
-
-  canOrder(): boolean {
-    return !(this.ordered || this.elevatorOnFloor);
-  }
-
-  setOrder() {
-    this.ordered = true;
-  }
-}
 
 
 export class ElevatorsStatus {

@@ -8,8 +8,9 @@
       <div>
         <app-floor
           [status]="floor"
+          [ordered]="floor.ordered"
           (floorCommand)="onFloorCommand($event)"
-        ></app-floor>
+           ></app-floor>
       </div>
     </div>
   </div>
@@ -17,7 +18,9 @@
     <div *ngFor="let status of elevatorsSubject | async">
       <app-elevator
         [status]=status
-
+        [nextFloor]="status.nextFloor"
+        [moveDuration]="status.secondsToNextFloor"
+        (floorReached)="onFloorReached($event)"
       ></app-elevator>
     </div>
   </div>

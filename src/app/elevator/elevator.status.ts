@@ -1,5 +1,6 @@
 import {UtilService} from '../utilService';
 import {OrdersQueue, Status} from '../elevator.models';
+import {Subject} from 'rxjs';
 
 export class ElevatorStatus implements Status {
   number: number;
@@ -8,17 +9,21 @@ export class ElevatorStatus implements Status {
   currentFloor = 1;
   secondsToNextFloor = 0;
   orders: OrdersQueue;
+  isWaitingOnFloor = false;
+  $floorCommandSubject: Subject<number>;
 
-  constructor(elevatorNumber: number) {
-    this.number = elevatorNumber + 1;
+  constructor(elevatorNumber: number, subject: Subject<number>) {
+    this.number = elevatorNumber;
     this.orders = new OrdersQueue();
+    this.$floorCommandSubject = subject;
 
   }
 
   moveElevator(floorOrdered: number) {
-    if (this.orders.hasOrders() || this.nextFloor) {
+    if (this.nextFloor) {
       this.orders.addOrder(floorOrdered);
     } else {
+      this.available = false;
       this.nextFloor = floorOrdered;
       this.startTime(floorOrdered);
 
@@ -26,21 +31,34 @@ export class ElevatorStatus implements Status {
   }
 
   startTime(floorOrdered: number) {
-    let moveDuration = UtilService.getMoveDuration(this.currentFloor, floorOrdered);
+    this.secondsToNextFloor = UtilService.getMoveDuration(this.currentFloor, floorOrdered);
     const direction = this.currentFloor - floorOrdered < 0 ? 1 : -1;
+
     const interval =
       setInterval(() => {
-        if (moveDuration) {
-          moveDuration -= 0.5;
+        if (this.secondsToNextFloor) {
+          this.secondsToNextFloor -= 0.5;
           this.currentFloor += direction;
-          this.secondsToNextFloor = moveDuration + 2;
+          if (this.secondsToNextFloor === 0) {
+            this.$floorCommandSubject.next(this.currentFloor);
+          }
         } else {
+          console.log(new Date().getTime());
+
+          console.log('reached floor');
+
           clearInterval(interval);
+
+
+          let delayDuration = 2;
+          this.isWaitingOnFloor = true;
           const floorDelay = setInterval(() => {
-            if (this.secondsToNextFloor) {
-              this.secondsToNextFloor -= 0.5;
-              console.log(this.secondsToNextFloor);
+            if (delayDuration) {
+              delayDuration -= 0.5;
+
             } else {
+              this.available = true;
+              this.isWaitingOnFloor = false;
               this.goToNextOrdered();
               clearInterval(floorDelay);
             }
@@ -51,6 +69,7 @@ export class ElevatorStatus implements Status {
   }
 
   goToNextOrdered(): void {
+    this.nextFloor = null;
     if (this.orders.hasOrders()) {
       this.moveElevator(this.orders.getOrder());
     } else {

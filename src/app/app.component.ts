@@ -20,12 +20,18 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.elevatorsSubject = this.elevatorService.elevatorsStatus;
-    this.floorsSubject = this.elevatorService.floorStatus;
+    this.elevatorsSubject = this.elevatorService.$elevatorsStatus;
+    this.floorsSubject = this.elevatorService.$floorStatus;
   }
 
 
   onFloorCommand($event: number) {
     this.elevatorService.updateFloorOrder($event);
+  }
+
+  onFloorReached($event: number) {
+     this.elevatorService.updateFloorReached($event);
+
+
   }
 }
