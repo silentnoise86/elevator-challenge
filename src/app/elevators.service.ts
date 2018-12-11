@@ -1,5 +1,5 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject, pipe, Subject} from 'rxjs';
+import {Injectable, OnDestroy} from '@angular/core';
+import {BehaviorSubject, pipe, Subject, Subscription} from 'rxjs';
 import {UtilService} from './utilService';
 import {delay, map, tap, timeout} from 'rxjs/operators';
 import {ElevatorStatus} from './elevator/elevator.status';
@@ -9,7 +9,7 @@ import {FloorStatus} from './floor/floor.status';
 @Injectable({
   providedIn: 'root',
 })
-export class ElevatorsService {
+export class ElevatorsService implements OnDestroy {
 
   $elevatorCommandSubject = new Subject<number>();
   $floorCommandSubject = new Subject<number>();
@@ -17,26 +17,10 @@ export class ElevatorsService {
   $floorStatus: BehaviorSubject<FloorStatus[]>;
   elevatorsNum = 3;
   floorsNum = 40;
-
+  subscriptions: Subscription[] = [];
 
   constructor() {
-    this.$elevatorsStatus = this.initStatus(ElevatorStatus, this.elevatorsNum);
-    this.$floorStatus = this.initStatus(FloorStatus, this.floorsNum);
-    this.$elevatorCommandSubject.pipe(
-      map(number => {
-        this.updateFloorsOrderToStatus(this.$floorStatus.value, number);
-        return number;
-      }),
-      tap(number => {
-        this.updateElevatorsStatus(this.$elevatorsStatus.value, number);
-      })
-    ).subscribe();
-    this.$floorCommandSubject.pipe(
-      tap(number => {
-        console.log(new Date().getTime());
-        this.updateFloorReachedToStatus(this.$floorStatus.value, number);
-      })
-    ).subscribe();
+    this.initSubscriptions();
   }
 
   private initStatus(statusType: any, count: number): BehaviorSubject<any[]> {
@@ -63,6 +47,38 @@ export class ElevatorsService {
 
   updateFloorReached($event: number) {
     this.$floorCommandSubject.next($event);
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private initElevatorCommandSubscription(): Subscription {
+    return this.$elevatorCommandSubject.pipe(
+      map(number => {
+        this.updateFloorsOrderToStatus(this.$floorStatus.value, number);
+        return number;
+      }),
+      tap(number => {
+        this.updateElevatorsStatus(this.$elevatorsStatus.value, number);
+      })
+    ).subscribe();
+  }
+
+  private initFloorCommanSubscription(): Subscription {
+    return this.$floorCommandSubject.pipe(
+      tap(number => {
+        console.log(new Date().getTime());
+        this.updateFloorReachedToStatus(this.$floorStatus.value, number);
+      })
+    ).subscribe();
+  }
+
+  private initSubscriptions(): void {
+    this.$elevatorsStatus = this.initStatus(ElevatorStatus, this.elevatorsNum);
+    this.$floorStatus = this.initStatus(FloorStatus, this.floorsNum);
+    this.subscriptions.push(this.initElevatorCommandSubscription());
+    this.subscriptions.push(this.initFloorCommanSubscription());
   }
 
   private getClosestElevator(floorNumber: number, elevatorsStatus: ElevatorStatus[]): ElevatorStatus {
