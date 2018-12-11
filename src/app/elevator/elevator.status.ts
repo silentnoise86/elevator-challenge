@@ -10,6 +10,7 @@ export class ElevatorStatus implements Status {
   secondsToNextFloor = 0;
   orders: OrdersQueue;
   isWaitingOnFloor = false;
+  onFloorDelay: number;
   $floorCommandSubject: Subject<number>;
 
   constructor(elevatorNumber: number, subject: Subject<number>) {
@@ -43,11 +44,11 @@ export class ElevatorStatus implements Status {
             this.$floorCommandSubject.next(this.currentFloor);
             this.isWaitingOnFloor = true;
             clearInterval(interval);
-            let delayDuration = 2;
+            this.onFloorDelay = 2;
             const floorDelay = setInterval(() => {
-              if (delayDuration) {
-                delayDuration -= 0.5;
-                if (delayDuration === 0) {
+              if (this.onFloorDelay) {
+                this.onFloorDelay -= 0.5;
+                if (this.onFloorDelay === 0) {
                   this.available = true;
                   this.isWaitingOnFloor = false;
                   this.$floorCommandSubject.next(-this.currentFloor);

@@ -1,7 +1,7 @@
 import {Injectable, OnDestroy} from '@angular/core';
-import {BehaviorSubject, pipe, Subject, Subscription} from 'rxjs';
+import {BehaviorSubject, Subject, Subscription} from 'rxjs';
 import {UtilService} from './utilService';
-import {delay, map, tap, timeout} from 'rxjs/operators';
+import {map, tap} from 'rxjs/operators';
 import {ElevatorStatus} from './elevator/elevator.status';
 import {FloorStatus} from './floor/floor.status';
 
@@ -32,11 +32,12 @@ export class ElevatorsService implements OnDestroy {
 
   private calcTotalTimeFromFloor(floor: number, status: ElevatorStatus) {
     const allOrders = [...status.orders.orders];
-    const distanceFromFloorOrdered = status.nextFloor ? Math.abs(status.nextFloor - floor) / 2 : Math.abs(status.currentFloor - floor) / 2;
-    const timeTillCurrentNextFloor = status.secondsToNextFloor ? status.secondsToNextFloor : 0;
+    const timeTillCurrentNextFloor = status.secondsToNextFloor ? status.secondsToNextFloor + 2 :
+      status.isWaitingOnFloor ? status.onFloorDelay : 0;
     const allOrdersReduced = allOrders.length ? allOrders.map((elevatorStatus, index, array) => (array[index + 1] ?
       Math.abs(elevatorStatus - array[index + 1]) / 2 + 2 : 0)).reduce((a, b) => a + b) : 0;
-    return timeTillCurrentNextFloor + allOrdersReduced + distanceFromFloorOrdered;
+    const floorToReachFrom = allOrders.length ? allOrders[allOrders.length - 1] : status.nextFloor ? status.nextFloor : status.currentFloor;
+    return timeTillCurrentNextFloor + allOrdersReduced + this.getDistanceFromFloorOrdered(floorToReachFrom, floor);
   }
 
   updateFloorOrder($event: number) {
@@ -52,6 +53,7 @@ export class ElevatorsService implements OnDestroy {
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
+
 
   private initElevatorCommandSubscription(): Subscription {
     return this.$elevatorCommandSubject.pipe(
@@ -80,14 +82,14 @@ export class ElevatorsService implements OnDestroy {
     this.subscriptions.push(this.initFloorCommandSubscription());
   }
 
-  private getClosestElevator(floorNumber: number, elevatorsStatus: ElevatorStatus[]): ElevatorStatus {
-    return elevatorsStatus.find(status => {
-      return status.number === 1;
-    });
+  private getClosestElevator(floorNumber: number, elevatorsStatus: ElevatorStatus[]) {
+    return elevatorsStatus.map(status => {
+      return {elevatorNumber: status.number, timeFromFloor: this.calcTotalTimeFromFloor(floorNumber, status)};
+    }).reduce((a, b) => a.timeFromFloor > b.timeFromFloor ? b : a);
   }
 
+
   private updateFloorsOrderToStatus(status: FloorStatus[], floorNumber: number) {
-    const result = [...status];
     status[floorNumber - 1].ordered = true;
   }
 
@@ -99,9 +101,8 @@ export class ElevatorsService implements OnDestroy {
     }
   }
 
-  private updateElevatorsStatus(value: ElevatorStatus[], number: number): void {
-    const closestElevator = this.getClosestElevator(number, value);
-
+  private updateElevatorsStatus(elevatorsStatus: ElevatorStatus[], number: number): void {
+    const closestElevator = elevatorsStatus[this.getClosestElevator(number, elevatorsStatus).elevatorNumber - 1];
     closestElevator.moveElevator(number);
   }
 
@@ -109,6 +110,10 @@ export class ElevatorsService implements OnDestroy {
   private isElevatorOnFloor(floorNumber: number): boolean {
     return !!this.$elevatorsStatus.value.find(elevator => elevator.currentFloor === floorNumber &&
       (elevator.available || elevator.isWaitingOnFloor));
+  }
+
+  private getDistanceFromFloorOrdered(currentFloor: number, floorOrdered: number): number {
+    return Math.abs(currentFloor - floorOrdered) / 2;
   }
 
 }
