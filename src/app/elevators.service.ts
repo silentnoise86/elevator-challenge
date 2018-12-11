@@ -65,10 +65,9 @@ export class ElevatorsService implements OnDestroy {
     ).subscribe();
   }
 
-  private initFloorCommanSubscription(): Subscription {
+  private initFloorCommandSubscription(): Subscription {
     return this.$floorCommandSubject.pipe(
       tap(number => {
-        console.log(new Date().getTime());
         this.updateFloorReachedToStatus(this.$floorStatus.value, number);
       })
     ).subscribe();
@@ -78,7 +77,7 @@ export class ElevatorsService implements OnDestroy {
     this.$elevatorsStatus = this.initStatus(ElevatorStatus, this.elevatorsNum);
     this.$floorStatus = this.initStatus(FloorStatus, this.floorsNum);
     this.subscriptions.push(this.initElevatorCommandSubscription());
-    this.subscriptions.push(this.initFloorCommanSubscription());
+    this.subscriptions.push(this.initFloorCommandSubscription());
   }
 
   private getClosestElevator(floorNumber: number, elevatorsStatus: ElevatorStatus[]): ElevatorStatus {
@@ -92,8 +91,12 @@ export class ElevatorsService implements OnDestroy {
     status[floorNumber - 1].ordered = true;
   }
 
-  private updateFloorReachedToStatus(allFloorStatus: FloorStatus[], floorReached: number) {
-    allFloorStatus[floorReached - 1].setFloorReached();
+  private updateFloorReachedToStatus(allFloorStatus: FloorStatus[], floorReached: number): void {
+    if (floorReached > 0) {
+      allFloorStatus[floorReached - 1].setFloorReached();
+    } else {
+      allFloorStatus[-floorReached - 1].setExitTimeOut();
+    }
   }
 
   private updateElevatorsStatus(value: ElevatorStatus[], number: number): void {
@@ -107,5 +110,6 @@ export class ElevatorsService implements OnDestroy {
     return !!this.$elevatorsStatus.value.find(elevator => elevator.currentFloor === floorNumber &&
       (elevator.available || elevator.isWaitingOnFloor));
   }
+
 }
 

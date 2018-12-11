@@ -10,6 +10,7 @@ import {FloorStatus} from './floor.status';
 export class FloorComponent implements OnChanges {
   @Input() status: FloorStatus;
   @Input() ordered: boolean;
+  @Input() elevatorArrived: boolean;
   @Output() floorCommand: EventEmitter<number> = new EventEmitter();
   floorNumber: number;
   floorOrdered = false;
@@ -20,8 +21,6 @@ export class FloorComponent implements OnChanges {
 
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(new Date().getTime());
-    console.log('in ngonchanges');
     if (!this.floorNumber) {
       this.floorNumber = this.status.number;
     }

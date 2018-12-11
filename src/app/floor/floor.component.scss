@@ -1,3 +1,10 @@
-.metal.ordered {
-  color: greenyellow;
+.metal {
+  &.ordered {
+    color: greenyellow
+  }
+  &.arrived {
+    color: blue;
+  }
+
+
 }

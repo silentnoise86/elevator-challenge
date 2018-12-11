@@ -9,6 +9,7 @@
         <app-floor
           [status]="floor"
           [ordered]="floor.ordered"
+          [elevatorArrived]="floor.elevatorArrived"
           (floorCommand)="onFloorCommand($event)"
            ></app-floor>
       </div>

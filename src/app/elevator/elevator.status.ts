@@ -41,28 +41,22 @@ export class ElevatorStatus implements Status {
           this.currentFloor += direction;
           if (this.secondsToNextFloor === 0) {
             this.$floorCommandSubject.next(this.currentFloor);
+            this.isWaitingOnFloor = true;
+            clearInterval(interval);
+            let delayDuration = 2;
+            const floorDelay = setInterval(() => {
+              if (delayDuration) {
+                delayDuration -= 0.5;
+                if (delayDuration === 0) {
+                  this.available = true;
+                  this.isWaitingOnFloor = false;
+                  this.$floorCommandSubject.next(-this.currentFloor);
+                  this.goToNextOrdered();
+                  clearInterval(floorDelay);
+                }
+              }
+            }, 500);
           }
-        } else {
-          console.log(new Date().getTime());
-
-          console.log('reached floor');
-
-          clearInterval(interval);
-
-
-          let delayDuration = 2;
-          this.isWaitingOnFloor = true;
-          const floorDelay = setInterval(() => {
-            if (delayDuration) {
-              delayDuration -= 0.5;
-
-            } else {
-              this.available = true;
-              this.isWaitingOnFloor = false;
-              this.goToNextOrdered();
-              clearInterval(floorDelay);
-            }
-          }, 500);
         }
       }, 500);
 

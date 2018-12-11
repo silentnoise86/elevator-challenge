@@ -1,4 +1,5 @@
 <div class="floor" id="floor-{{floorNumber}}">
-  <button (click)="orderElevator()" class="metal linear" [ngClass]="{'ordered' : ordered}">{{floorNumber}}</button>
+  <button (click)="orderElevator()" class="metal linear"
+          [ngClass]="{'ordered' : ordered, 'arrived': elevatorArrived}">{{floorNumber}}</button>
 </div>
 <div class="blackline"></div>

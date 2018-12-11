@@ -4,13 +4,12 @@ export class FloorStatus implements Status {
   number: number;
   ordered = false;
   floorHeight?: string;
-
+  elevatorArrived = false;
 
   constructor(floorNumber) {
     this.number = floorNumber;
-    console.log(this.number);
     this.floorHeight = (107 * this.number).toString() + 'px';
-   }
+  }
 
   canOrder(): boolean {
     return !(this.ordered);
@@ -18,9 +17,12 @@ export class FloorStatus implements Status {
 
   setFloorReached(): void {
     this.ordered = false;
-    console.log(new Date());
-    console.log('setting to false');
+    this.elevatorArrived = true;
 
+  }
+
+  setExitTimeOut() {
+    this.elevatorArrived = false;
   }
 
   setOrder() {
